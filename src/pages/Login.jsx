@@ -16,6 +16,13 @@ const API_BASE = (
   import.meta.env.VITE_API_URL || "http://localhost:5000"
 ).replace(/\/+$/, "");
 
+const initialSetupForm = {
+  rollNumber: "",
+  setupCode: "",
+  password: "",
+  confirmPassword: "",
+};
+
 export default function Login() {
   const navigate = useNavigate();
 
@@ -30,6 +37,12 @@ export default function Login() {
 
   const [checkingSession, setCheckingSession] = useState(true);
   const [savedUser, setSavedUser] = useState(null);
+
+  const [showPasswordSetup, setShowPasswordSetup] = useState(false);
+  const [setupForm, setSetupForm] = useState(initialSetupForm);
+  const [setupLoading, setSetupLoading] = useState(false);
+  const [setupError, setSetupError] = useState("");
+  const [setupSuccess, setSetupSuccess] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -93,11 +106,21 @@ export default function Login() {
     setRole(newRole);
     setForm({ rollNumber: "", password: "" });
     setError("");
+    setSetupError("");
+    setSetupSuccess("");
+    setShowPasswordSetup(false);
   };
 
   const handleChange = (event) => {
     setForm({
       ...form,
+      [event.target.name]: event.target.value,
+    });
+  };
+
+  const handleSetupChange = (event) => {
+    setSetupForm({
+      ...setupForm,
       [event.target.name]: event.target.value,
     });
   };
@@ -142,6 +165,64 @@ export default function Login() {
       setError(err.message || "Unable to connect to the server");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handlePasswordSetup(event) {
+    event.preventDefault();
+
+    setSetupError("");
+    setSetupSuccess("");
+
+    if (setupForm.password !== setupForm.confirmPassword) {
+      setSetupError("Passwords do not match.");
+      return;
+    }
+
+    if (setupForm.password.length < 12) {
+      setSetupError("Password must be at least 12 characters long.");
+      return;
+    }
+
+    setSetupLoading(true);
+
+    try {
+      const response = await fetch(`${API_BASE}/api/auth/setup-password`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          identifier: setupForm.rollNumber.trim(),
+          setupCode: setupForm.setupCode.trim(),
+          password: setupForm.password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Unable to set password.");
+      }
+
+      setSetupSuccess(
+        "Password set successfully. You can now log in."
+      );
+
+      setForm({
+        rollNumber: setupForm.rollNumber.trim(),
+        password: "",
+      });
+
+      setRole("student");
+      setSetupForm(initialSetupForm);
+      setShowPasswordSetup(false);
+    } catch (err) {
+      setSetupError(
+        err.message || "Unable to connect to the server."
+      );
+    } finally {
+      setSetupLoading(false);
     }
   }
 
@@ -224,81 +305,246 @@ export default function Login() {
               </div>
             </div>
           ) : (
-            <form className="login-card" onSubmit={handleLogin}>
-              <span className="kz-tag">Secure sign-in</span>
+            <div className="login-card">
+              <span className="kz-tag">
+                {showPasswordSetup
+                  ? "First-time setup"
+                  : "Secure sign-in"}
+              </span>
 
               <h2 className="disp">
-                {isAdmin ? "Admin Login" : "Student Login"}
+                {showPasswordSetup
+                  ? "Set Your Password"
+                  : isAdmin
+                    ? "Admin Login"
+                    : "Student Login"}
               </h2>
 
               <p className="lead">
-                {isAdmin
-                  ? "Enter your staff ID and password to continue."
-                  : "Enter your college roll number and password to continue."}
+                {showPasswordSetup
+                  ? "Enter your roll number and private one-time setup code."
+                  : isAdmin
+                    ? "Enter your staff ID and password to continue."
+                    : "Enter your college roll number and password to continue."}
               </p>
 
-              <div className="role-pick">
-                <button
-                  type="button"
-                  className={role === "student" ? "active" : ""}
-                  onClick={() => switchRole("student")}
-                >
-                  <GraduationCap size={15} /> Student
-                </button>
+              {!showPasswordSetup && (
+                <div className="role-pick">
+                  <button
+                    type="button"
+                    className={role === "student" ? "active" : ""}
+                    onClick={() => switchRole("student")}
+                  >
+                    <GraduationCap size={15} /> Student
+                  </button>
 
-                <button
-                  type="button"
-                  className={role === "admin" ? "active" : ""}
-                  onClick={() => switchRole("admin")}
-                >
-                  <ShieldCheck size={15} /> Admin
-                </button>
-              </div>
+                  <button
+                    type="button"
+                    className={role === "admin" ? "active" : ""}
+                    onClick={() => switchRole("admin")}
+                  >
+                    <ShieldCheck size={15} /> Admin
+                  </button>
+                </div>
+              )}
 
-              <div className="field">
-                <label>{isAdmin ? "Staff ID" : "Roll Number"}</label>
-                <input
-                  name="rollNumber"
-                  value={form.rollNumber}
-                  onChange={handleChange}
-                  placeholder={
-                    isAdmin ? "Enter your staff ID" : "Enter your college roll number"
-                  }
-                  autoComplete="username"
-                  required
-                />
-              </div>
+              {showPasswordSetup ? (
+                <form onSubmit={handlePasswordSetup}>
+                  <div className="field">
+                    <label>Roll Number</label>
+                    <input
+                      name="rollNumber"
+                      value={setupForm.rollNumber}
+                      onChange={handleSetupChange}
+                      placeholder="Enter your college roll number"
+                      autoComplete="username"
+                      required
+                    />
+                  </div>
 
-              <div className="field">
-                <label>Password</label>
-                <input
-                  name="password"
-                  type="password"
-                  value={form.password}
-                  onChange={handleChange}
-                  placeholder="Enter your password"
-                  autoComplete="current-password"
-                  required
-                />
-              </div>
+                  <div className="field">
+                    <label>One-Time Setup Code</label>
+                    <input
+                      name="setupCode"
+                      type="password"
+                      value={setupForm.setupCode}
+                      onChange={handleSetupChange}
+                      placeholder="Enter your private setup code"
+                      autoComplete="off"
+                      required
+                    />
+                  </div>
 
-              {error && <div className="login-error">{error}</div>}
+                  <div className="field">
+                    <label>New Password</label>
+                    <input
+                      name="password"
+                      type="password"
+                      value={setupForm.password}
+                      onChange={handleSetupChange}
+                      placeholder="At least 12 characters"
+                      autoComplete="new-password"
+                      minLength={12}
+                      required
+                    />
+                  </div>
 
-              <button
-                type="submit"
-                className="login-submit"
-                disabled={loading}
-              >
-                {loading ? "Signing in..." : "Login"}
+                  <div className="field">
+                    <label>Confirm New Password</label>
+                    <input
+                      name="confirmPassword"
+                      type="password"
+                      value={setupForm.confirmPassword}
+                      onChange={handleSetupChange}
+                      placeholder="Re-enter your new password"
+                      autoComplete="new-password"
+                      minLength={12}
+                      required
+                    />
+                  </div>
 
-                {!loading && (
-                  <ArrowRight
-                    size={15}
-                    style={{ marginLeft: 6, verticalAlign: "-2px" }}
-                  />
-                )}
-              </button>
-            </form>
+                  {setupError && (
+                    <div className="login-error" role="alert">
+                      {setupError}
+                    </div>
+                  )}
+
+                  {setupSuccess && (
+                    <div
+                      role="status"
+                      style={{
+                        color: "green",
+                        fontSize: 13,
+                        marginBottom: 12,
+                      }}
+                    >
+                      {setupSuccess}
+                    </div>
+                  )}
+
+                  <button
+                    type="submit"
+                    className="login-submit"
+                    disabled={setupLoading}
+                  >
+                    {setupLoading
+                      ? "Setting password..."
+                      : "Set Password"}
+
+                    {!setupLoading && (
+                      <ArrowRight
+                        size={15}
+                        style={{
+                          marginLeft: 6,
+                          verticalAlign: "-2px",
+                        }}
+                      />
+                    )}
+                  </button>
+
+                  <div className="login-alt">
+                    Already set your password?{" "}
+                    <span
+                      onClick={() => {
+                        setShowPasswordSetup(false);
+                        setSetupError("");
+                        setSetupSuccess("");
+                      }}
+                    >
+                      Back to Login
+                    </span>
+                  </div>
+                </form>
+              ) : (
+                <form onSubmit={handleLogin}>
+                  <div className="field">
+                    <label>{isAdmin ? "Staff ID" : "Roll Number"}</label>
+                    <input
+                      name="rollNumber"
+                      value={form.rollNumber}
+                      onChange={handleChange}
+                      placeholder={
+                        isAdmin
+                          ? "Enter your staff ID"
+                          : "Enter your college roll number"
+                      }
+                      autoComplete="username"
+                      required
+                    />
+                  </div>
+
+                  <div className="field">
+                    <label>Password</label>
+                    <input
+                      name="password"
+                      type="password"
+                      value={form.password}
+                      onChange={handleChange}
+                      placeholder="Enter your password"
+                      autoComplete="current-password"
+                      required
+                    />
+                  </div>
+
+                  {error && (
+                    <div className="login-error" role="alert">
+                      {error}
+                    </div>
+                  )}
+
+                  {setupSuccess && (
+                    <div
+                      role="status"
+                      style={{
+                        color: "green",
+                        fontSize: 13,
+                        marginBottom: 12,
+                      }}
+                    >
+                      {setupSuccess}
+                    </div>
+                  )}
+
+                  <button
+                    type="submit"
+                    className="login-submit"
+                    disabled={loading}
+                  >
+                    {loading ? "Signing in..." : "Login"}
+
+                    {!loading && (
+                      <ArrowRight
+                        size={15}
+                        style={{
+                          marginLeft: 6,
+                          verticalAlign: "-2px",
+                        }}
+                      />
+                    )}
+                  </button>
+
+                  {role === "student" && (
+                    <div className="login-alt">
+                      First time here?{" "}
+                      <span
+                        onClick={() => {
+                          setSetupForm({
+                            ...initialSetupForm,
+                            rollNumber: form.rollNumber.trim(),
+                          });
+                          setSetupError("");
+                          setSetupSuccess("");
+                          setError("");
+                          setShowPasswordSetup(true);
+                        }}
+                      >
+                        Set up password
+                      </span>
+                    </div>
+                  )}
+                </form>
+              )}
+            </div>
           )}
         </div>
       </div>
