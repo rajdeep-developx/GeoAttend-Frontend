@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import "../styles/login-style.css";
 import { useNavigate } from "react-router-dom";
@@ -11,143 +12,125 @@ import {
   ShieldCheck,
 } from "lucide-react";
 
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const API_BASE = (
+  import.meta.env.VITE_API_URL || "http://localhost:5000"
+).replace(/\/+$/, "");
 
 export default function Login() {
   const navigate = useNavigate();
 
-  const [role, setRole] = useState("student"); // "student" | "admin"
-  const [step, setStep] = useState("details"); // "details" | "otp"
-
+  const [role, setRole] = useState("student");
   const [form, setForm] = useState({
     rollNumber: "",
-    email: "",
-    otp: "",
+    password: "",
   });
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [info, setInfo] = useState("");
 
-  // Saved session
   const [checkingSession, setCheckingSession] = useState(true);
   const [savedUser, setSavedUser] = useState(null);
 
-  // Check existing JWT session
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    const userStr = localStorage.getItem("user");
+    let cancelled = false;
 
-    if (!token || !userStr) {
-      setCheckingSession(false);
-      return;
-    }
+    async function checkSession() {
+      const token = localStorage.getItem("token");
+      const userStr = localStorage.getItem("user");
 
-    fetch(`${API_BASE}/api/auth/me`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((res) => (res.ok ? res.json() : Promise.reject()))
-      .then((data) => setSavedUser(data.user))
-      .catch(() => {
+      if (!token || !userStr) {
+        if (!cancelled) setCheckingSession(false);
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_BASE}/api/auth/me`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error("Session expired");
+        }
+
+        const data = await response.json();
+
+        if (!cancelled) {
+          setSavedUser(data.user);
+        }
+      } catch {
         localStorage.removeItem("token");
         localStorage.removeItem("user");
-      })
-      .finally(() => setCheckingSession(false));
+      } finally {
+        if (!cancelled) setCheckingSession(false);
+      }
+    }
+
+    checkSession();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  // Continue with saved account
   const continueAsSavedUser = () => {
-    navigate(`/app/${savedUser.role}`);
+    if (savedUser) {
+      navigate(`/app/${savedUser.role}`);
+    }
   };
 
-  // Use another account
   const useAnotherAccount = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
 
     setSavedUser(null);
-    setStep("details");
-    setForm({ rollNumber: "", email: "", otp: "" });
+    setForm({ rollNumber: "", password: "" });
     setError("");
-    setInfo("");
   };
 
-  // Switch Student / Admin tab
-  const switchRole = (r) => {
-    setRole(r);
-    setStep("details");
-    setForm({ rollNumber: "", email: "", otp: "" });
+  const switchRole = (newRole) => {
+    setRole(newRole);
+    setForm({ rollNumber: "", password: "" });
     setError("");
-    setInfo("");
   };
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = (event) => {
+    setForm({
+      ...form,
+      [event.target.name]: event.target.value,
+    });
   };
 
-  // Send OTP
-  const handleSendOtp = async (e) => {
-    e.preventDefault();
+  async function handleLogin(event) {
+    event.preventDefault();
 
     setError("");
-    setInfo("");
     setLoading(true);
 
     try {
-      const response = await fetch(`${API_BASE}/api/auth/send-otp`, {
+      const response = await fetch(`${API_BASE}/api/auth/login`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
-          identifier: form.rollNumber,
-          email: form.email,
-          role,
+          identifier: form.rollNumber.trim(),
+          password: form.password,
         }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || "Could not send OTP");
+        throw new Error(data.message || "Login failed");
       }
 
-      setInfo(data.message);
-      setStep("otp");
-    } catch (err) {
-      setError(err.message || "Unable to connect to the server");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Verify OTP
-  const handleVerifyOtp = async (e) => {
-    e.preventDefault();
-
-    setError("");
-    setLoading(true);
-
-    try {
-      const response = await fetch(`${API_BASE}/api/auth/verify-otp`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          identifier: form.rollNumber,
-          otp: form.otp,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Invalid OTP");
-      }
-
-      // Safety check: selected tab must match the account's real role
-      if (data.user.role !== role) {
+      if (!data.user || data.user.role !== role) {
         throw new Error(
           role === "admin"
-            ? "This account is not an admin."
-            : "This is an admin account. Use the Admin tab."
+            ? "This account is not an admin. Select the correct role."
+            : "This is an admin account. Select the Admin tab."
         );
       }
 
@@ -160,13 +143,12 @@ export default function Login() {
     } finally {
       setLoading(false);
     }
-  };
+  }
 
   const isAdmin = role === "admin";
 
   return (
     <div className="login-page">
-      {/* ================= NAVBAR ================= */}
       <nav className="login-nav">
         <div className="login-brand">
           <div className="mark">
@@ -190,7 +172,6 @@ export default function Login() {
         </div>
       </nav>
 
-      {/* ================= LOGIN AREA ================= */}
       <div className="login-hero login-hero-solo">
         <div className="login-form-side">
           {checkingSession ? (
@@ -202,10 +183,9 @@ export default function Login() {
                 fontSize: 13.5,
               }}
             >
-              Checking for a saved session…
+              Checking for a saved session...
             </div>
           ) : savedUser ? (
-            /* ================= SAVED USER ================= */
             <div className="login-card saved-card">
               <div className="saved-avatar">
                 {savedUser.role === "admin" ? (
@@ -237,116 +217,79 @@ export default function Login() {
               </button>
 
               <div className="login-alt">
-                Not you? <span onClick={useAnotherAccount}>Use another account</span>
+                Not you?{" "}
+                <span onClick={useAnotherAccount}>
+                  Use another account
+                </span>
               </div>
             </div>
           ) : (
-            /* ================= LOGIN FORM ================= */
-            <form
-              className="login-card"
-              onSubmit={step === "details" ? handleSendOtp : handleVerifyOtp}
-            >
-              <span className="kz-tag">
-                {step === "details" ? "Secure sign-in" : "Check your email"}
-              </span>
+            <form className="login-card" onSubmit={handleLogin}>
+              <span className="kz-tag">Secure sign-in</span>
+
               <h2 className="disp">
-                {isAdmin ? "Admin Login" : "Activate GeoAttend Account"}
+                {isAdmin ? "Admin Login" : "Student Login"}
               </h2>
 
               <p className="lead">
-                {step === "details"
-                  ? isAdmin
-                    ? "Enter your staff ID and college email to receive a one-time code."
-                    : "Enter your roll number and college email to receive a one-time code."
-                  : `Enter the code sent to ${form.email}.`}
+                {isAdmin
+                  ? "Enter your staff ID and password to continue."
+                  : "Enter your college roll number and password to continue."}
               </p>
 
-              {/* ================= ROLE TABS ================= */}
-              {step === "details" && (
-                <div className="role-pick">
-                  <button
-                    type="button"
-                    className={role === "student" ? "active" : ""}
-                    onClick={() => switchRole("student")}
-                  >
-                    <GraduationCap size={15} /> Student
-                  </button>
-                  <button
-                    type="button"
-                    className={role === "admin" ? "active" : ""}
-                    onClick={() => switchRole("admin")}
-                  >
-                    <ShieldCheck size={15} /> Admin
-                  </button>
-                </div>
-              )}
+              <div className="role-pick">
+                <button
+                  type="button"
+                  className={role === "student" ? "active" : ""}
+                  onClick={() => switchRole("student")}
+                >
+                  <GraduationCap size={15} /> Student
+                </button>
 
-              {/* ================= STEP 1 ================= */}
-              {step === "details" && (
-                <>
-                  <div className="field">
-                    <label>{isAdmin ? "Staff ID" : "Roll Number"}</label>
-                    <input
-                      name="rollNumber"
-                      value={form.rollNumber}
-                      onChange={handleChange}
-                      placeholder={isAdmin ? "ADM-0231" : "Enter Your College Roll No"}
-                      required
-                    />
-                  </div>
+                <button
+                  type="button"
+                  className={role === "admin" ? "active" : ""}
+                  onClick={() => switchRole("admin")}
+                >
+                  <ShieldCheck size={15} /> Admin
+                </button>
+              </div>
 
-                  <div className="field">
-                    <label>College Email</label>
-                    <input
-                      name="email"
-                      type="email"
-                      value={form.email}
-                      onChange={handleChange}
-                      placeholder={
-                        isAdmin ? "staff@gmail.com" : "yourrollno@kiit.ac.in"
-                      }
-                      required
-                    />
-                  </div>
-                </>
-              )}
+              <div className="field">
+                <label>{isAdmin ? "Staff ID" : "Roll Number"}</label>
+                <input
+                  name="rollNumber"
+                  value={form.rollNumber}
+                  onChange={handleChange}
+                  placeholder={
+                    isAdmin ? "Enter your staff ID" : "Enter your college roll number"
+                  }
+                  autoComplete="username"
+                  required
+                />
+              </div>
 
-              {/* ================= STEP 2 ================= */}
-              {step === "otp" && (
-                <div className="field">
-                  <label>OTP Verification</label>
-                  <input
-                    name="otp"
-                    value={form.otp}
-                    onChange={(e) =>
-                      setForm({
-                        ...form,
-                        otp: e.target.value.replace(/\D/g, "").slice(0, 6),
-                      })
-                    }
-                    placeholder="6-digit code"
-                    maxLength={6}
-                    inputMode="numeric"
-                    pattern="[0-9]{6}"
-                    required
-                    autoFocus
-                  />
-                </div>
-              )}
+              <div className="field">
+                <label>Password</label>
+                <input
+                  name="password"
+                  type="password"
+                  value={form.password}
+                  onChange={handleChange}
+                  placeholder="Enter your password"
+                  autoComplete="current-password"
+                  required
+                />
+              </div>
 
-              {/* ================= ERROR ================= */}
               {error && <div className="login-error">{error}</div>}
 
-              {/* ================= INFO ================= */}
-              {info && !error && <div className="login-info">{info}</div>}
-
-              {/* ================= SUBMIT ================= */}
-              <button type="submit" className="login-submit" disabled={loading}>
-                {loading
-                  ? "Please wait…"
-                  : step === "details"
-                  ? "Send OTP"
-                  : "Verify & Continue"}
+              <button
+                type="submit"
+                className="login-submit"
+                disabled={loading}
+              >
+                {loading ? "Signing in..." : "Login"}
 
                 {!loading && (
                   <ArrowRight
@@ -355,29 +298,11 @@ export default function Login() {
                   />
                 )}
               </button>
-
-              {/* ================= BACK ================= */}
-              {step === "otp" && (
-                <div className="login-alt">
-                  Wrong details?{" "}
-                  <span
-                    onClick={() => {
-                      setStep("details");
-                      setError("");
-                      setInfo("");
-                      setForm({ ...form, otp: "" });
-                    }}
-                  >
-                    Go back
-                  </span>
-                </div>
-              )}
             </form>
           )}
         </div>
       </div>
 
-      {/* ================= FOOTER ================= */}
       <footer className="landing-footer">
         <div className="footer-brand">
           <div className="footer-mark">
@@ -391,10 +316,20 @@ export default function Login() {
         </div>
 
         <div className="footer-socials">
-          <a href="https://github.com" target="_blank" rel="noreferrer" aria-label="GitHub">
+          <a
+            href="https://github.com"
+            target="_blank"
+            rel="noreferrer"
+            aria-label="GitHub"
+          >
             <Github size={17} />
           </a>
-          <a href="https://linkedin.com" target="_blank" rel="noreferrer" aria-label="LinkedIn">
+          <a
+            href="https://linkedin.com"
+            target="_blank"
+            rel="noreferrer"
+            aria-label="LinkedIn"
+          >
             <Linkedin size={17} />
           </a>
           <a href="mailto:hello@geoattend.app" aria-label="Email">
