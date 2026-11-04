@@ -10,8 +10,6 @@ import {
 
 import { StatusBadge, MethodPill } from "../components/Bits.jsx";
 import AttendanceStat from "../components/AttendanceStat.jsx";
-import timetable from "../data/timetable.json";
-import rollToSection from "../data/rollToSection.json";
 
 import { Html5Qrcode } from "html5-qrcode";
 
@@ -28,6 +26,8 @@ export default function StudentDashboard() {
   const [checkedIn, setCheckedIn] = useState(false);
   const [name, setName] = useState("");
   const [rollNumber, setRollNumber] = useState("");
+const [section, setSection] = useState("");
+const [timetable, setTimetable] = useState({});
   const [checkInMethod, setCheckInMethod] = useState(null);
 
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -75,6 +75,38 @@ export default function StudentDashboard() {
       }
     }
   }, []);
+
+useEffect(() => {
+  const token = localStorage.getItem("token");
+
+  if (!token) return;
+
+  async function loadTimetable() {
+    try {
+      const response = await fetch(
+        `${API_BASE}/api/attendance/my-timetable`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to load timetable");
+      }
+
+      setSection(data.section || "");
+      setTimetable(data.timetable || {});
+    } catch (error) {
+      console.error("Timetable loading error:", error);
+    }
+  }
+
+  loadTimetable();
+}, []);
 
   // =========================================
   // LOAD ENABLED CHECK-IN METHODS (ADMIN SETTINGS)
@@ -175,13 +207,11 @@ export default function StudentDashboard() {
   // STUDENT SECTION
   // =========================================
 
-  const section = rollToSection[rollNumber];
-
   // Student ke section ke subject -> teacher (DL, EPP...)
 const sectionTeachers = (() => {
   const map = {};
 
-  Object.values(timetable[section] || {}).forEach((day) =>
+  Object.values(timetable || {}).forEach((day) =>
     day.forEach((c) => {
       if (c.teacher && !map[c.subject]) map[c.subject] = c.teacher;
     })
@@ -215,7 +245,7 @@ const sectionTeachers = (() => {
   // =========================================
 
   const selectedDayName = DAYS[selectedDate.getDay()];
-  const selectedClasses = section ? timetable[section]?.[selectedDayName] || [] : [];
+  const selectedClasses = timetable[selectedDayName] || [];
 
   const isSameDate = (a, b) =>
     a.getFullYear() === b.getFullYear() &&
@@ -566,7 +596,7 @@ const sectionTeachers = (() => {
             const active = isSameDate(date, selectedDate);
             const isToday = isSameDate(date, today);
             const dayName = DAYS[date.getDay()];
-            const classCount = section ? timetable[section]?.[dayName]?.length || 0 : 0;
+            const classCount = timetable[dayName]?.length || 0;
 
             return (
               <button
