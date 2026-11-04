@@ -1,0 +1,213 @@
+@import url("https://fonts.googleapis.com/css2?family=Bowlby+One&display=swap");
+
+/* Login / activate page: same sticker style as landing page */
+
+.login-page {
+  --kz-cream: #f7f5f0;
+  --kz-red: #ff3b0f;
+  --kz-lime: #c8f31d;
+  --kz-ink: #111111;
+  --kz-muted: #5a5a55;
+  --kz-chunk: "Bowlby One", Impact, "Arial Black", sans-serif;
+  background: var(--kz-cream);
+}
+
+.login-page .login-form-side {
+  padding: 40px 20px;
+}
+
+/* card */
+.login-page .login-card {
+  width: 100%;
+  max-width: 560px;
+  background: #fff;
+  border: 3px solid var(--kz-ink);
+  border-radius: 28px;
+  padding: 40px 36px 36px;
+  box-shadow: 0 8px 0 var(--kz-ink);
+}
+
+.login-page .login-card h2 {
+  font-family: var(--kz-chunk);
+  font-weight: 400;
+  text-transform: uppercase;
+  font-size: clamp(26px, 3.4vw, 36px);
+  line-height: 1.08;
+  letter-spacing: -0.01em;
+  color: var(--kz-ink);
+  margin-bottom: 12px;
+}
+
+.login-page .login-card .lead {
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--kz-muted);
+  margin-bottom: 26px;
+}
+
+/* student / admin toggle */
+.login-page .role-pick {
+  gap: 12px;
+  margin-bottom: 28px;
+}
+
+.login-page .role-pick button {
+  font-family: var(--kz-chunk);
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: var(--kz-ink);
+  background: #fff;
+  border: 2.5px solid var(--kz-ink);
+  border-radius: 999px;
+  padding: 12px;
+  box-shadow: 0 4px 0 var(--kz-ink);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.login-page .role-pick button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 0 var(--kz-ink);
+}
+
+.login-page .role-pick button.active {
+  background: var(--kz-lime);
+  color: var(--kz-ink);
+  border-color: var(--kz-ink);
+}
+
+/* inputs */
+.login-page .field {
+  margin-bottom: 18px;
+}
+
+.login-page .field label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--kz-ink);
+  margin-bottom: 7px;
+}
+
+.login-page .field input,
+.login-page .field select {
+  font-size: 15px;
+  color: var(--kz-ink);
+  background: #fff;
+  border: 2.5px solid var(--kz-ink);
+  border-radius: 14px;
+  padding: 13px 15px;
+}
+
+.login-page .field input::placeholder {
+  color: #8a8a84;
+}
+
+.login-page .field input:focus,
+.login-page .field select:focus {
+  border-color: var(--kz-red);
+  box-shadow: 0 0 0 4px rgba(255, 59, 15, 0.15);
+}
+
+/* submit */
+.login-page .login-submit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 8px;
+  font-family: var(--kz-chunk);
+  font-size: 15px;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: var(--kz-ink);
+  background: var(--kz-lime);
+  border: 2.5px solid var(--kz-ink);
+  border-radius: 999px;
+  padding: 15px;
+  box-shadow: 0 5px 0 var(--kz-ink);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.login-page .login-submit:hover {
+  background: var(--kz-red);
+  color: #fff;
+  transform: translateY(-2px) rotate(-0.5deg);
+  box-shadow: 0 7px 0 var(--kz-ink);
+}
+
+.login-page .login-submit:active {
+  transform: translateY(3px);
+  box-shadow: 0 2px 0 var(--kz-ink);
+}
+
+.login-page .login-alt span {
+  color: var(--kz-red);
+}
+
+@media (max-width: 560px) {
+  .login-page .login-card {
+    padding: 28px 20px 26px;
+    border-radius: 22px;
+  }
+}
+/* tag above heading */
+.login-page .kz-tag {
+  display: inline-block;
+  background: var(--kz-red);
+  color: #fff;
+  font-family: var(--kz-chunk);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 8px 14px;
+  border-radius: 14px 10px 16px 10px;
+  transform: rotate(-4deg);
+  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.16);
+}
+
+.login-page .login-card .kz-tag + h2 {
+  margin-top: 18px;
+}
+
+/* error / info boxes */
+.login-page .login-error,
+.login-page .login-info {
+  margin: 8px 0 14px;
+  padding: 11px 14px;
+  border: 2.5px solid var(--kz-ink);
+  border-radius: 14px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.login-page .login-error {
+  background: var(--kz-red);
+  color: #fff;
+}
+
+.login-page .login-info {
+  background: var(--kz-lime);
+  color: var(--kz-ink);
+}
+
+/* disabled submit while loading */
+.login-page .login-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  background: var(--kz-lime);
+  color: var(--kz-ink);
+  box-shadow: 0 5px 0 var(--kz-ink);
+}
+
+/* "Continue as ..." saved session screen */
+.login-page .saved-avatar {
+  background: var(--kz-red);
+  color: #fff;
+  border: 3px solid var(--kz-ink);
+  box-shadow: 0 4px 0 var(--kz-ink);
+}
+
+.login-page .login-card .saved-name {
+  font-size: 24px;
+}

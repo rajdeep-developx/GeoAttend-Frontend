@@ -1,0 +1,583 @@
+@import url("https://fonts.googleapis.com/css2?family=Bowlby+One&display=swap");
+
+/* ============================================================
+   Landing sections: playful sticker style
+   (hero, features, why/about, technology stack)
+   Import this AFTER global.css (LandingPage.jsx does it).
+   ============================================================ */
+
+.landing-page {
+  --kz-cream: #f7f5f0;
+  --kz-red: #ff3b0f;
+  --kz-lime: #c8f31d;
+  --kz-ink: #111111;
+  --kz-muted: #5a5a55;
+  --kz-chunk: "Bowlby One", Impact, "Arial Black", sans-serif;
+}
+
+/* ---------- section shells ---------- */
+.landing-page section.features-section,
+.landing-page section.about-section,
+.landing-page section.stack-section {
+  background: var(--kz-cream);
+  max-width: none;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+}
+
+.landing-page section.features-section {
+  padding: 96px 24px 72px;
+}
+
+.landing-page section.about-section {
+  padding: 72px 24px 32px;
+}
+
+.landing-page section.stack-section {
+  padding: 24px 24px 96px;
+}
+
+/* ---------- shared bits ---------- */
+.landing-page .kz-title {
+  font-family: var(--kz-chunk);
+  font-weight: 400;
+  text-align: inherit;
+  text-transform: uppercase;
+  color: var(--kz-ink);
+  font-size: clamp(34px, 5vw, 62px);
+  line-height: 1.02;
+  letter-spacing: -0.01em;
+  margin: 18px 0 0;
+}
+
+.kz-tag {
+  display: inline-block;
+  background: var(--kz-red);
+  color: #fff;
+  font-family: var(--kz-chunk);
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 9px 15px;
+  border-radius: 14px 10px 16px 10px;
+  transform: rotate(-5deg);
+  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.16);
+}
+
+.kz-tag.lime {
+  background: var(--kz-lime);
+  color: var(--kz-ink);
+}
+
+.kz-sticker {
+  display: inline-block;
+  margin-top: 12px;
+  background: var(--kz-ink);
+  color: var(--kz-lime);
+  font-family: var(--kz-chunk);
+  text-transform: uppercase;
+  font-size: clamp(26px, 4vw, 50px);
+  line-height: 1;
+  padding: 14px 22px;
+  border-radius: 18px;
+  border: 4px solid #fff;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08), 0 10px 22px rgba(0, 0, 0, 0.18);
+  transform: rotate(-3deg);
+}
+
+.kz-sub {
+  color: var(--kz-muted);
+  font-size: 17px;
+  line-height: 1.6;
+  margin: 26px 0 0;
+  max-width: 460px;
+}
+
+/* scalloped badge */
+.scallop {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+}
+
+.scallop svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.35s ease;
+}
+
+.scallop-icon {
+  position: relative;
+  display: grid;
+  place-items: center;
+  z-index: 1;
+}
+
+/* ---------- FEATURES (two columns) ---------- */
+.kz-wrap {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 5fr 7fr;
+  gap: 56px;
+  align-items: start;
+}
+
+.kz-head {
+  position: sticky;
+  top: 96px;
+}
+
+.kz-mascot {
+  display: block;
+  width: 190px;
+  margin-top: 30px;
+  transform-origin: 50% 100%;
+  animation: kz-bob 3.2s ease-in-out infinite;
+}
+
+@keyframes kz-bob {
+  0%, 100% { transform: translateY(0) rotate(-2deg); }
+  50% { transform: translateY(-8px) rotate(2deg); }
+}
+
+.kz-list {
+  display: grid;
+  gap: 14px;
+}
+
+.kz-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  background: #fff;
+  border-radius: 24px;
+  padding: 24px 28px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.kz-card:hover {
+  transform: translateY(-3px) rotate(-0.4deg);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.09);
+}
+
+.kz-card:hover .scallop svg {
+  transform: rotate(18deg) scale(1.06);
+}
+
+.kz-card-title {
+  font-size: 20px;
+  font-weight: 650;
+  color: var(--kz-ink);
+}
+
+.kz-card-body {
+  margin-top: 6px;
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--kz-muted);
+}
+
+/* ---------- WHY / ABOUT (centered) ---------- */
+.kz-center {
+  max-width: 1100px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.kz-center .kz-sub {
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 560px;
+}
+
+.kz-why-grid {
+  margin-top: 48px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  text-align: left;
+}
+
+.kz-why-card {
+  background: #fff;
+  border-radius: 26px;
+  padding: 30px 28px 32px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.kz-why-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.09);
+}
+
+.kz-why-card:hover .scallop svg {
+  transform: rotate(18deg) scale(1.06);
+}
+
+.kz-why-title {
+  margin-top: 22px;
+  font-size: 21px;
+  font-weight: 650;
+  color: var(--kz-ink);
+}
+
+.kz-why-body {
+  margin-top: 8px;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--kz-muted);
+}
+
+/* ---------- TECH STACK ---------- */
+.kz-stack {
+  max-width: 1100px;
+  margin: 0 auto;
+  background: #fff;
+  border-radius: 30px;
+  padding: 44px 28px 48px;
+  text-align: center;
+}
+
+.landing-page .kz-stack .kz-title {
+  font-size: clamp(28px, 3.6vw, 40px);
+  margin-top: 16px;
+}
+
+.kz-chips {
+  margin-top: 32px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+}
+
+.kz-chip {
+  font-family: var(--kz-chunk);
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: var(--kz-ink);
+  background: var(--kz-cream);
+  border: 2.5px solid var(--kz-ink);
+  border-radius: 999px;
+  padding: 11px 20px;
+  box-shadow: 0 4px 0 var(--kz-ink);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.kz-chip:nth-child(odd) { transform: rotate(-2deg); }
+.kz-chip:nth-child(even) { transform: rotate(1.6deg); }
+.kz-chip:nth-child(3n) { background: var(--kz-lime); }
+
+.kz-chip:hover {
+  transform: translateY(-3px) rotate(0deg);
+  box-shadow: 0 7px 0 var(--kz-ink);
+  background: var(--kz-red);
+  color: #fff;
+}
+
+/* ---------- HERO ---------- */
+.landing-page section.landing-hero {
+  background: var(--kz-cream);
+  max-width: none;
+  margin: 0;
+  padding: 80px max(48px, calc((100% - 1184px) / 2)) 90px;
+}
+
+.landing-page .hero-copy .kz-hero-title {
+  font-family: var(--kz-chunk);
+  font-weight: 400;
+  text-transform: uppercase;
+  color: var(--kz-ink);
+  font-size: clamp(34px, 4.6vw, 58px);
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+  margin: 20px 0 0;
+}
+
+.landing-page .hero-copy .kz-hero-title .kz-sticker {
+  font-size: 0.95em;
+  margin-top: 14px;
+}
+
+.landing-page .hero-copy .kz-hero-sub {
+  margin-top: 30px;
+  font-size: 17px;
+  line-height: 1.65;
+  color: var(--kz-muted);
+  max-width: 480px;
+}
+
+.kz-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--kz-chunk);
+  font-size: 15px;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: var(--kz-ink);
+  background: var(--kz-lime);
+  border: 2.5px solid var(--kz-ink);
+  border-radius: 999px;
+  padding: 14px 26px;
+  box-shadow: 0 5px 0 var(--kz-ink);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.kz-btn:hover {
+  transform: translateY(-2px) rotate(-1deg);
+  box-shadow: 0 7px 0 var(--kz-ink);
+  background: var(--kz-red);
+  color: #fff;
+}
+
+.kz-btn:active {
+  transform: translateY(3px);
+  box-shadow: 0 2px 0 var(--kz-ink);
+}
+
+@media (max-width: 860px) {
+  .landing-page section.landing-hero {
+    padding: 50px 24px 60px;
+  }
+}
+
+/* ---------- responsive ---------- */
+@media (max-width: 900px) {
+  .kz-wrap {
+    grid-template-columns: 1fr;
+    gap: 36px;
+  }
+  .kz-head {
+    position: static;
+  }
+  .kz-why-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .landing-page section.features-section { padding: 64px 16px 48px; }
+  .landing-page section.about-section { padding: 48px 16px 24px; }
+  .landing-page section.stack-section { padding: 16px 16px 64px; }
+  .kz-card { padding: 20px 18px; }
+  .kz-stack { padding: 32px 16px 36px; }
+  .kz-chip { font-size: 12px; padding: 9px 14px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kz-mascot { animation: none; }
+  .kz-card, .kz-why-card, .kz-chip, .scallop svg { transition: none; }
+}
+
+
+/* Fix landing hero overflow on mobile only */
+@media (max-width: 768px) {
+  .landing-page {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: clip;
+  }
+
+  .landing-page .landing-nav {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .landing-page .landing-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    padding: 32px 20px;
+    gap: 28px;
+  }
+
+  .landing-page .hero-copy {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  .landing-page .kz-tag {
+    display: inline-block;
+    max-width: 100%;
+    box-sizing: border-box;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .landing-page .kz-hero-title {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    font-size: clamp(32px, 9.5vw, 48px);
+    line-height: 1.05;
+    letter-spacing: -0.025em;
+    overflow-wrap: anywhere;
+    word-break: normal;
+  }
+
+  .landing-page .kz-hero-title .kz-sticker {
+    display: inline-block;
+    max-width: 100%;
+    box-sizing: border-box;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .landing-page .kz-hero-sub {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    font-size: 17px;
+    line-height: 1.65;
+    overflow-wrap: anywhere;
+  }
+
+  .landing-page .hero-actions {
+    max-width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .landing-page .hero-actions .kz-btn {
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .landing-page .kz-mascot,
+  .landing-page img,
+  .landing-page video {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .landing-page .landing-hero {
+    padding: 28px 16px;
+    gap: 24px;
+  }
+
+  .landing-page .kz-hero-title {
+    font-size: clamp(30px, 9vw, 40px);
+  }
+
+  .landing-page .kz-hero-sub {
+    font-size: 16px;
+  }
+}
+
+/* FINAL FIX: landing page mobile overflow */
+@media (max-width: 768px) {
+  .landing-page,
+  .landing-page .landing-hero,
+  .landing-page .hero-copy {
+    box-sizing: border-box;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .landing-page .landing-hero {
+    padding: 32px 16px;
+    overflow: hidden;
+  }
+
+  .landing-page .kz-tag {
+    transform: none;
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .landing-page .hero-copy .kz-hero-title {
+    width: 100%;
+    max-width: 100%;
+    font-size: clamp(30px, 8.5vw, 42px);
+    line-height: 1.08;
+    letter-spacing: -0.02em;
+    overflow-wrap: break-word;
+  }
+
+  .landing-page .hero-copy .kz-hero-title .kz-sticker {
+    display: inline-block;
+    max-width: 100%;
+    box-sizing: border-box;
+    padding: 10px 12px;
+    font-size: 0.78em;
+    line-height: 1.1;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    transform: none;
+  }
+
+  .landing-page .hero-copy .kz-hero-sub {
+    max-width: 100%;
+    font-size: 16px;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+  }
+
+  .landing-page .hero-copy *,
+  .landing-page .hero-actions {
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+}
+
+/* Fix landing footer on mobile */
+@media (max-width: 560px) {
+  .landing-page .landing-footer {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    padding: 24px 18px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 18px;
+  }
+
+  .landing-page .footer-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+  }
+
+  .landing-page .footer-text {
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    text-align: left;
+    overflow-wrap: normal;
+    word-break: normal;
+    line-height: 1.6;
+  }
+
+  .landing-page .footer-socials {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 16px;
+    width: 100%;
+  }
+}
