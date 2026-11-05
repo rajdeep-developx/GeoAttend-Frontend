@@ -29,6 +29,7 @@ export default function Login() {
   const navigate = useNavigate();
 
   const [role, setRole] = useState("student");
+
   const [form, setForm] = useState({
     rollNumber: "",
     password: "",
@@ -53,6 +54,9 @@ export default function Login() {
   const [chatMessage, setChatMessage] = useState("");
   const [chatMessageType, setChatMessageType] = useState("info");
 
+  const isAdmin = role === "admin";
+
+  // Check saved session
   useEffect(() => {
     let cancelled = false;
 
@@ -61,7 +65,9 @@ export default function Login() {
       const userStr = localStorage.getItem("user");
 
       if (!token || !userStr) {
-        if (!cancelled) setCheckingSession(false);
+        if (!cancelled) {
+          setCheckingSession(false);
+        }
         return;
       }
 
@@ -85,7 +91,9 @@ export default function Login() {
         localStorage.removeItem("token");
         localStorage.removeItem("user");
       } finally {
-        if (!cancelled) setCheckingSession(false);
+        if (!cancelled) {
+          setCheckingSession(false);
+        }
       }
     }
 
@@ -107,17 +115,31 @@ export default function Login() {
     localStorage.removeItem("user");
 
     setSavedUser(null);
-    setForm({ rollNumber: "", password: "" });
+    setForm({
+      rollNumber: "",
+      password: "",
+    });
     setError("");
   };
 
   const switchRole = (newRole) => {
     setRole(newRole);
-    setForm({ rollNumber: "", password: "" });
+
+    setForm({
+      rollNumber: "",
+      password: "",
+    });
+
     setError("");
     setSetupError("");
     setSetupSuccess("");
     setShowPasswordSetup(false);
+    setSetupForm(initialSetupForm);
+
+    // Reset chatbot messages when switching role
+    setChatRollNumber("");
+    setChatMessage("");
+    setChatMessageType("info");
   };
 
   const handleChange = (event) => {
@@ -134,39 +156,74 @@ export default function Login() {
     });
   };
 
-  // Open default email application with prefilled developer email
-  const handleEmailDeveloper = () => {
-  const developerEmail = "23051290@kiit.ac.in";
+  // Contact Developer - Student and Teacher
+  const handleEmailDeveloper = (identifierOverride = "") => {
+    const developerEmail = "23051290@kiit.ac.in";
 
-  const subject = "GeoAttend - One-Time Setup Code Request";
+    const identifierValue =
+      identifierOverride.trim() ||
+      chatRollNumber.trim() ||
+      form.rollNumber.trim() ||
+      setupForm.rollNumber.trim();
 
-  const body = `Hello Developer,
+    const identifierLabel =
+      role === "admin" ? "Teacher ID" : "Roll Number";
 
-I would like to request my one-time password setup code for GeoAttend.
+    const subject =
+      role === "admin"
+        ? "GeoAttend - Teacher One-Time Setup Code Request"
+        : "GeoAttend - Student One-Time Setup Code Request";
 
-My Roll Number: ${chatRollNumber.trim()}
+    const requestType =
+      role === "admin"
+        ? "I request a one-time setup code to create my GeoAttend Teacher account password."
+        : "I request a one-time setup code to create my GeoAttend Student account password.";
+
+    const body = `Hello Developer,
+
+I need assistance with my GeoAttend account.
+
+${identifierLabel}: ${identifierValue}
+
+Request: ${requestType}
+
+Please provide my one-time setup code.
 
 Thank you.`;
 
-  const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(
-    developerEmail
-  )}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(
+      developerEmail
+    )}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 
-  window.open(gmailUrl, "_blank", "noopener,noreferrer");
-};
+    window.open(gmailUrl, "_blank", "noopener,noreferrer");
+  };
 
-  // Check student password setup status
+  // Student and Teacher chatbot handling
   async function handleSetupStatusCheck(event) {
     event.preventDefault();
 
     const identifier = chatRollNumber.trim();
 
     if (!identifier) {
-      setChatMessage("Please enter your roll number.");
+      setChatMessage(
+        isAdmin
+          ? "Please enter your Teacher ID."
+          : "Please enter your roll number."
+      );
       setChatMessageType("error");
       return;
     }
 
+    // Teacher: Show email request option
+    if (isAdmin) {
+      setChatMessage(
+        "To request your one-time Teacher setup code, click the Email Developer button below."
+      );
+      setChatMessageType("pending");
+      return;
+    }
+
+    // Existing Student setup-status API flow
     setChatLoading(true);
     setChatMessage("");
     setChatMessageType("info");
@@ -179,7 +236,9 @@ Thank you.`;
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ identifier }),
+          body: JSON.stringify({
+            identifier,
+          }),
         }
       );
 
@@ -214,6 +273,7 @@ Thank you.`;
     }
   }
 
+  // Student and Teacher login
   async function handleLogin(event) {
     event.preventDefault();
 
@@ -241,8 +301,8 @@ Thank you.`;
       if (!data.user || data.user.role !== role) {
         throw new Error(
           role === "admin"
-            ? "This account is not an admin. Select the correct role."
-            : "This is an admin account. Select the Admin tab."
+            ? "This account is not a Teacher account. Check your Teacher ID."
+            : "This is a Teacher account. Please select the Teacher tab."
         );
       }
 
@@ -257,11 +317,26 @@ Thank you.`;
     }
   }
 
+  // Student and Teacher password setup
   async function handlePasswordSetup(event) {
     event.preventDefault();
 
     setSetupError("");
     setSetupSuccess("");
+
+    if (!setupForm.rollNumber.trim()) {
+      setSetupError(
+        isAdmin
+          ? "Please enter your Teacher ID."
+          : "Please enter your roll number."
+      );
+      return;
+    }
+
+    if (!setupForm.setupCode.trim()) {
+      setSetupError("Please enter your one-time setup code.");
+      return;
+    }
 
     if (setupForm.password !== setupForm.confirmPassword) {
       setSetupError("Passwords do not match.");
@@ -306,7 +381,6 @@ Thank you.`;
         password: "",
       });
 
-      setRole("student");
       setSetupForm(initialSetupForm);
       setShowPasswordSetup(false);
     } catch (err) {
@@ -318,8 +392,6 @@ Thank you.`;
     }
   }
 
-  const isAdmin = role === "admin";
-
   return (
     <div className="login-page">
       <nav className="login-nav">
@@ -327,6 +399,7 @@ Thank you.`;
           <div className="mark">
             <Radar size={18} color="#fff" />
           </div>
+
           <div className="name disp">GeoAttend</div>
         </div>
 
@@ -373,7 +446,7 @@ Thank you.`;
               </h2>
 
               <p className="lead saved-sub">
-                {savedUser.role === "admin" ? "Admin" : "Student"} Â·{" "}
+                {savedUser.role === "admin" ? "Teacher" : "Student"} ·{" "}
                 {savedUser.identifier}
               </p>
 
@@ -385,7 +458,10 @@ Thank you.`;
                 Continue
                 <ArrowRight
                   size={15}
-                  style={{ marginLeft: 6, verticalAlign: "-2px" }}
+                  style={{
+                    marginLeft: 6,
+                    verticalAlign: "-2px",
+                  }}
                 />
               </button>
 
@@ -408,15 +484,17 @@ Thank you.`;
                 {showPasswordSetup
                   ? "Set Your Password"
                   : isAdmin
-                  ? "Admin Login"
+                  ? "Teacher Login"
                   : "Student Login"}
               </h2>
 
               <p className="lead">
                 {showPasswordSetup
-                  ? "Enter your roll number and private one-time setup code."
+                  ? isAdmin
+                    ? "Enter your Teacher ID and private one-time setup code."
+                    : "Enter your college roll number and private one-time setup code."
                   : isAdmin
-                  ? "Enter your staff ID and password to continue."
+                  ? "Enter your Teacher ID and password to continue."
                   : "Enter your college roll number and password to continue."}
               </p>
 
@@ -427,7 +505,8 @@ Thank you.`;
                     className={role === "student" ? "active" : ""}
                     onClick={() => switchRole("student")}
                   >
-                    <GraduationCap size={15} /> Student
+                    <GraduationCap size={15} />
+                    Student
                   </button>
 
                   <button
@@ -435,7 +514,8 @@ Thank you.`;
                     className={role === "admin" ? "active" : ""}
                     onClick={() => switchRole("admin")}
                   >
-                    <ShieldCheck size={15} /> Admin
+                    <ShieldCheck size={15} />
+                    Teacher
                   </button>
                 </div>
               )}
@@ -443,12 +523,19 @@ Thank you.`;
               {showPasswordSetup ? (
                 <form onSubmit={handlePasswordSetup}>
                   <div className="field">
-                    <label>Roll Number</label>
+                    <label>
+                      {isAdmin ? "Teacher ID" : "Roll Number"}
+                    </label>
+
                     <input
                       name="rollNumber"
                       value={setupForm.rollNumber}
                       onChange={handleSetupChange}
-                      placeholder="Enter your college roll number"
+                      placeholder={
+                        isAdmin
+                          ? "Enter your Teacher ID"
+                          : "Enter your college roll number"
+                      }
                       autoComplete="username"
                       required
                     />
@@ -456,6 +543,7 @@ Thank you.`;
 
                   <div className="field">
                     <label>One-Time Setup Code</label>
+
                     <input
                       name="setupCode"
                       type="password"
@@ -469,6 +557,7 @@ Thank you.`;
 
                   <div className="field">
                     <label>New Password</label>
+
                     <input
                       name="password"
                       type="password"
@@ -483,6 +572,7 @@ Thank you.`;
 
                   <div className="field">
                     <label>Confirm New Password</label>
+
                     <input
                       name="confirmPassword"
                       type="password"
@@ -535,6 +625,13 @@ Thank you.`;
                   </button>
 
                   <div className="login-alt">
+                    Need help?{" "}
+                    <span onClick={handleEmailDeveloper}>
+                      Contact Developer
+                    </span>
+                  </div>
+
+                  <div className="login-alt">
                     Already set your password?{" "}
                     <span
                       onClick={() => {
@@ -550,14 +647,17 @@ Thank you.`;
               ) : (
                 <form onSubmit={handleLogin}>
                   <div className="field">
-                    <label>{isAdmin ? "Staff ID" : "Roll Number"}</label>
+                    <label>
+                      {isAdmin ? "Teacher ID" : "Roll Number"}
+                    </label>
+
                     <input
                       name="rollNumber"
                       value={form.rollNumber}
                       onChange={handleChange}
                       placeholder={
                         isAdmin
-                          ? "Enter your staff ID"
+                          ? "Enter your Teacher ID"
                           : "Enter your college roll number"
                       }
                       autoComplete="username"
@@ -567,6 +667,7 @@ Thank you.`;
 
                   <div className="field">
                     <label>Password</label>
+
                     <input
                       name="password"
                       type="password"
@@ -615,7 +716,14 @@ Thank you.`;
                     )}
                   </button>
 
-                  {role === "student" && (
+                  {isAdmin ? (
+                    <div className="login-alt">
+                      Forgot Password?{" "}
+                      <span onClick={handleEmailDeveloper}>
+                        Contact Developer
+                      </span>
+                    </div>
+                  ) : (
                     <div className="login-alt">
                       First time here?{" "}
                       <span
@@ -624,6 +732,28 @@ Thank you.`;
                             ...initialSetupForm,
                             rollNumber: form.rollNumber.trim(),
                           });
+
+                          setSetupError("");
+                          setSetupSuccess("");
+                          setError("");
+                          setShowPasswordSetup(true);
+                        }}
+                      >
+                        Set up password
+                      </span>
+                    </div>
+                  )}
+
+                  {isAdmin && (
+                    <div className="login-alt">
+                      First time here?{" "}
+                      <span
+                        onClick={() => {
+                          setSetupForm({
+                            ...initialSetupForm,
+                            rollNumber: form.rollNumber.trim(),
+                          });
+
                           setSetupError("");
                           setSetupSuccess("");
                           setError("");
@@ -641,22 +771,29 @@ Thank you.`;
         </div>
       </div>
 
-      {/* Floating Chatbot */}
+      {/* Floating Student and Teacher Chatbot */}
       <div className="geo-chat-widget">
         {chatOpen && (
           <div className="geo-chat-panel">
             <div className="geo-chat-header">
               <div className="geo-chat-heading">
                 <div className="geo-chat-avatar">
-                  <GraduationCap size={20} />
+                  {isAdmin ? (
+                    <ShieldCheck size={20} />
+                  ) : (
+                    <GraduationCap size={20} />
+                  )}
                 </div>
 
                 <div>
                   <div className="geo-chat-title">
                     GeoAttend Assistant
                   </div>
+
                   <div className="geo-chat-subtitle">
-                    Password setup status
+                    {isAdmin
+                      ? "Teacher password setup assistance"
+                      : "Password setup status"}
                   </div>
                 </div>
               </div>
@@ -673,8 +810,9 @@ Thank you.`;
 
             <div className="geo-chat-body">
               <div className="geo-chat-bubble bot">
-                Hi! Please enter your college roll number to check your
-                password setup status.
+                {isAdmin
+                  ? "Hi Teacher! Please enter your Teacher ID to request your one-time password setup code."
+                  : "Hi! Please enter your college roll number to check your password setup status."}
               </div>
 
               {chatMessage && (
@@ -686,12 +824,13 @@ Thank you.`;
                 </div>
               )}
 
-              {/* Show email button only when setup is pending */}
               {chatMessageType === "pending" && (
                 <button
                   type="button"
                   className="geo-chat-email-button"
-                  onClick={handleEmailDeveloper}
+                  onClick={() =>
+                    handleEmailDeveloper(chatRollNumber)
+                  }
                   disabled={!chatRollNumber.trim()}
                 >
                   <Mail size={16} />
@@ -700,8 +839,9 @@ Thank you.`;
               )}
 
               <div className="geo-chat-note">
-                This assistant only checks setup status. It never provides
-                setup codes.
+                {isAdmin
+                  ? "Your setup code will be shared privately by the developer. This assistant never displays setup codes."
+                  : "This assistant only checks setup status. It never provides setup codes."}
               </div>
             </div>
 
@@ -717,8 +857,14 @@ Thank you.`;
                   setChatMessage("");
                   setChatMessageType("info");
                 }}
-                placeholder="Enter your roll number"
-                aria-label="College roll number"
+                placeholder={
+                  isAdmin
+                    ? "Enter your Teacher ID"
+                    : "Enter your roll number"
+                }
+                aria-label={
+                  isAdmin ? "Teacher ID" : "College roll number"
+                }
                 autoComplete="off"
                 disabled={chatLoading}
                 required
@@ -727,7 +873,11 @@ Thank you.`;
               <button
                 type="submit"
                 disabled={chatLoading || !chatRollNumber.trim()}
-                aria-label="Check setup status"
+                aria-label={
+                  isAdmin
+                    ? "Request setup code"
+                    : "Check setup status"
+                }
               >
                 {chatLoading ? (
                   <span className="geo-chat-spinner" />
@@ -754,6 +904,7 @@ Thank you.`;
           <div className="footer-mark">
             <Radar size={18} color="#fff" />
           </div>
+
           <div className="footer-name disp">GeoAttend</div>
         </div>
 
@@ -780,7 +931,10 @@ Thank you.`;
             <Linkedin size={17} />
           </a>
 
-          <a href="mailto:hello@geoattend.app" aria-label="Email">
+          <a
+            href="mailto:hello@geoattend.app"
+            aria-label="Email"
+          >
             <Mail size={17} />
           </a>
         </div>
@@ -948,7 +1102,6 @@ Thank you.`;
           border: 1px solid #bfdbfe;
         }
 
-        /* Email Developer button */
         .geo-chat-email-button {
           width: 100%;
           min-height: 42px;
